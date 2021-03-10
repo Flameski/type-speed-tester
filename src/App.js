@@ -1,13 +1,15 @@
-import Layout from './components/Layout';
-import Game from './components/Game';
+import { BrowserRouter as Router, Route } from 'react-router-dom';
+import Home from './Home';
+import Login from './Login';
 
 function App() {
   return (
-    <div className="App">
-      <Layout>
-        <Game />
-      </Layout>
-    </div>
+    <Router>
+      <div>
+        <Route exact path="/" component={Home} />
+        <Route exact path="/login" component={Login} />
+      </div>
+    </Router>
   );
 }
 

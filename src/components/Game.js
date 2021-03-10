@@ -4,8 +4,10 @@ import WordField from './WordField';
 import WordInput from './WordInput';
 import WPM from './WPM';
 import CPM from './CPM';
+import DisplayResults from './DisplayResults';
+import firebase from '../firebase';
 
-const Game = () => {
+const Game = ({ user }) => {
   const [timerStarted, setTimerStarted] = useState(false);
   const [wordInput, setWordInput] = useState('');
   const [words, setWords] = useState([
@@ -21,6 +23,7 @@ const Game = () => {
   const [charactersTyped, setCharactersTyped] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(1);
   const [gameOver, setGameOver] = useState(false);
+  const [userResults, setUserResults] = useState({});
 
   const startTimer = () => {
     setTimerStarted(!timerStarted);
@@ -67,6 +70,7 @@ const Game = () => {
       let timer = setInterval(() => {
         if (completedWords === 5) {
           endGame();
+          console.log('game over');
         }
         setElapsedTime(elapsedTime + 1);
         calculateWpm();
@@ -77,7 +81,30 @@ const Game = () => {
       };
     }
   });
-
+  const submitResult = () => {
+    const results = firebase.database().ref('Results');
+    const result = {
+      userId: user.uid,
+      userWpm: wpm,
+      userCpm: cpm,
+      time: new Date().toLocaleString(),
+    };
+    results.push(result);
+  };
+  useEffect(() => {
+    const results = firebase.database().ref('Results');
+    results
+      .orderByChild('userId')
+      .equalTo(user.uid)
+      .on('value', function (snapshot) {
+        const res = snapshot.val();
+        const resArray = [];
+        for (let id in res) {
+          resArray.push(res[id]);
+        }
+        setUserResults([...resArray]);
+      });
+  }, []);
   return (
     <div>
       <Counter timerStarted={timerStarted} />
@@ -90,6 +117,8 @@ const Game = () => {
       />
       <WPM wpm={wpm} />
       <CPM cpm={cpm} />
+      <button onClick={submitResult}>submit results</button>
+      <DisplayResults userResults={userResults} />
     </div>
   );
 };
