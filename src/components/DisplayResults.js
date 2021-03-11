@@ -9,9 +9,9 @@ const DisplayResults = ({ userResults }) => {
     }
   }, [userResults]);
   return (
-    <div>
-      {resultArr.map(result => {
-        return <SingleResult {...result} />;
+    <div className="resultsSection">
+      {resultArr.map((result, i) => {
+        return <SingleResult key={i} {...result} />;
       })}
     </div>
   );

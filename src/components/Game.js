@@ -6,28 +6,38 @@ import WPM from './WPM';
 import CPM from './CPM';
 import DisplayResults from './DisplayResults';
 import firebase from '../firebase';
+import { wordsList } from './words';
 
 const Game = ({ user }) => {
   const [timerStarted, setTimerStarted] = useState(false);
   const [wordInput, setWordInput] = useState('');
-  const [words, setWords] = useState([
-    { id: 0, word: 'apple', done: false },
-    { id: 1, word: 'banana', done: false },
-    { id: 2, word: 'cherry', done: false },
-    { id: 3, word: 'date', done: false },
-    { id: 4, word: 'figma', done: false },
-  ]);
+  const [words, setWords] = useState(wordsList);
   const [wpm, setWpm] = useState(0);
   const [cpm, setCpm] = useState(0);
   const [completedWords, setCompletedWords] = useState(0);
   const [charactersTyped, setCharactersTyped] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(1);
-  const [gameOver, setGameOver] = useState(false);
   const [userResults, setUserResults] = useState({});
 
   const startTimer = () => {
     setTimerStarted(!timerStarted);
   };
+
+  useEffect(() => {
+    if (timerStarted) {
+      let timer = setInterval(() => {
+        if (completedWords === 100) {
+          endGame();
+        }
+        setElapsedTime(elapsedTime + 1);
+        calculateWpm();
+        calculateCpm();
+      }, 1000);
+      return () => {
+        clearInterval(timer);
+      };
+    }
+  });
 
   const evaluateInput = e => {
     if (e.key === ' ') {
@@ -61,26 +71,8 @@ const Game = ({ user }) => {
 
   const endGame = () => {
     setTimerStarted(!timerStarted);
-    setGameOver(!gameOver);
-    console.log('game over');
   };
 
-  useEffect(() => {
-    if (timerStarted) {
-      let timer = setInterval(() => {
-        if (completedWords === 5) {
-          endGame();
-          console.log('game over');
-        }
-        setElapsedTime(elapsedTime + 1);
-        calculateWpm();
-        calculateCpm();
-      }, 1000);
-      return () => {
-        clearInterval(timer);
-      };
-    }
-  });
   const submitResult = () => {
     const results = firebase.database().ref('Results');
     const result = {
@@ -104,20 +96,30 @@ const Game = ({ user }) => {
         }
         setUserResults([...resArray]);
       });
-  }, []);
+  }, [user.uid]);
   return (
     <div>
       <Counter timerStarted={timerStarted} />
       <WordField words={words} />
-      <button onClick={startTimer}>Start</button>
       <WordInput
         evaluateInput={evaluateInput}
         wordInput={wordInput}
         handleInput={handleInput}
       />
-      <WPM wpm={wpm} />
-      <CPM cpm={cpm} />
-      <button onClick={submitResult}>submit results</button>
+      <div className="meters">
+        <WPM wpm={wpm} />
+        <CPM cpm={cpm} />
+      </div>
+      <button
+        className="start-btn"
+        onClick={startTimer}
+        style={{ display: timerStarted ? 'none' : 'block' }}
+      >
+        Start
+      </button>
+      <button className="submit-btn" onClick={submitResult}>
+        submit results
+      </button>
       <DisplayResults userResults={userResults} />
     </div>
   );
